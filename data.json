@@ -1,0 +1,163 @@
+[
+  {
+    "date": "2026-08-25",
+    "a_carts": 5,
+    "b_carts": 5,
+    "a_spend": 4.03,
+    "b_spend": 10.63
+  },
+  {
+    "date": "2026-08-26",
+    "a_carts": 8,
+    "b_carts": 9,
+    "a_spend": 15.07,
+    "b_spend": 15.61
+  },
+  {
+    "date": "2026-08-27",
+    "a_carts": 11,
+    "b_carts": 12,
+    "a_spend": 13.68,
+    "b_spend": 12.25
+  },
+  {
+    "date": "2026-08-28",
+    "a_carts": 5,
+    "b_carts": 8,
+    "a_spend": 16.66,
+    "b_spend": 14.1
+  },
+  {
+    "date": "2026-08-29",
+    "a_carts": 11,
+    "b_carts": 7,
+    "a_spend": 15.86,
+    "b_spend": 12.66
+  },
+  {
+    "date": "2026-08-30",
+    "a_carts": 9,
+    "b_carts": 10,
+    "a_spend": 17.8,
+    "b_spend": 18.36
+  },
+  {
+    "date": "2026-08-31",
+    "a_carts": 1,
+    "b_carts": 3,
+    "a_spend": 10.51,
+    "b_spend": 10.08
+  },
+  {
+    "date": "2026-09-01",
+    "a_carts": 10,
+    "b_carts": 6,
+    "a_spend": 15.49,
+    "b_spend": 14.06
+  },
+  {
+    "date": "2026-09-02",
+    "a_carts": 7,
+    "b_carts": 8,
+    "a_spend": 13.87,
+    "b_spend": 15.8
+  },
+  {
+    "date": "2026-09-03",
+    "a_carts": 5,
+    "b_carts": 6,
+    "a_spend": 13.81,
+    "b_spend": 13.15
+  },
+  {
+    "date": "2026-09-04",
+    "a_carts": 7,
+    "b_carts": 2,
+    "a_spend": 15.09,
+    "b_spend": 15.45
+  },
+  {
+    "date": "2026-09-05",
+    "a_carts": 10,
+    "b_carts": 4,
+    "a_spend": 14.25,
+    "b_spend": 14.77
+  },
+  {
+    "date": "2026-09-06",
+    "a_carts": 7,
+    "b_carts": 12,
+    "a_spend": 16.54,
+    "b_spend": 16.39
+  },
+  {
+    "date": "2026-09-07",
+    "a_carts": 5,
+    "b_carts": 3,
+    "a_spend": 12.95,
+    "b_spend": 13.67
+  },
+  {
+    "date": "2026-09-08",
+    "a_carts": 6,
+    "b_carts": 5,
+    "a_spend": 14.55,
+    "b_spend": 14.44
+  },
+  {
+    "date": "2026-09-09",
+    "a_carts": 4,
+    "b_carts": 7,
+    "a_spend": 14.57,
+    "b_spend": 15.41
+  },
+  {
+    "date": "2026-09-10",
+    "a_carts": 4,
+    "b_carts": 2,
+    "a_spend": 14.51,
+    "b_spend": 13.58
+  },
+  {
+    "date": "2026-09-11",
+    "a_carts": 5,
+    "b_carts": 5,
+    "a_spend": 10.54,
+    "b_spend": 10.69
+  },
+  {
+    "date": "2026-09-12",
+    "a_carts": 10,
+    "b_carts": 3,
+    "a_spend": 14.54,
+    "b_spend": 14.11
+  },
+  {
+    "date": "2026-09-13",
+    "a_carts": 6,
+    "b_carts": 6,
+    "a_spend": 15.51,
+    "b_spend": 14.53
+  },
+  {
+    "date": "2026-09-14",
+    "a_carts": 7,
+    "b_carts": 4,
+    "a_spend": 14.5,
+    "b_spend": 7.08
+  },
+  {
+    "date": "2026-09-15",
+    "a_carts": 8,
+    "b_carts": 4,
+    "a_spend": 13.9,
+    "b_spend": 13.34
+  },
+  {
+    "date": "2026-09-16",
+    "a_carts": 2,
+    "b_carts": 3,
+    "a_spend": 14.35,
+    "b_spend": 16.17
+  }
+]
