@@ -1,0 +1,23 @@
+name: PDC daily ad check
+
+on:
+  schedule:
+    # 18:05 UTC = 1:05 PM Central during daylight-saving time (Mar–Nov).
+    # In winter (Central Standard Time) this fires at 12:05 PM Central;
+    # change 18 -> 19 in November if you want to keep it at 1 PM.
+    - cron: "5 18 * * *"
+  workflow_dispatch: {}   # also lets you run it on demand from the Actions tab
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch stats and post to Slack
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: python fetch_and_post.py
