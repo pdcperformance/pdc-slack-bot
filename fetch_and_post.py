@@ -26,6 +26,7 @@ API = f"https://graph.facebook.com/{API_VERSION}"
 TOKEN = os.environ.get("META_ACCESS_TOKEN")
 SLACK_WEBHOOK = os.environ.get("SLACK_WEBHOOK_URL")
 CAMPAIGN_ID = os.environ.get("CAMPAIGN_ID", "120246423368000680")
+DATA_FILE = os.environ.get("DATA_FILE", "data.json")
 
 # The two ad sets we compare, in display order (A first, then B).
 # Reel A = the original device reel; Reel B = the slot now running the carousel.
@@ -134,6 +135,36 @@ def post_slack(text):
         r.read()
 
 
+def update_history(rows):
+    """Append yesterday's A/B numbers to data.json (deduped by date) for the graph."""
+    by_id = {r.get("adset_id"): r for r in rows}
+    a = by_id.get("120246423368010680")
+    b = by_id.get("120246980935840680")
+    if not a or not b:
+        return  # need both reels to record a comparison point
+    date = a.get("date_start") or b.get("date_start")
+    if not date:
+        return
+    rec = {
+        "date": date,
+        "a_carts": add_to_carts(a.get("actions")),
+        "b_carts": add_to_carts(b.get("actions")),
+        "a_spend": round(float(a.get("spend", 0) or 0), 2),
+        "b_spend": round(float(b.get("spend", 0) or 0), 2),
+    }
+    try:
+        with open(DATA_FILE) as f:
+            hist = json.load(f)
+    except (FileNotFoundError, ValueError):
+        hist = []
+    hist = [h for h in hist if h.get("date") != date]  # replace same-day if re-run
+    hist.append(rec)
+    hist.sort(key=lambda h: h.get("date", ""))
+    with open(DATA_FILE, "w") as f:
+        json.dump(hist, f, indent=2)
+    print(f"History updated: {date} (now {len(hist)} days)")
+
+
 def main():
     if not TOKEN:
         print("ERROR: META_ACCESS_TOKEN is not set", file=sys.stderr)
@@ -154,6 +185,7 @@ def main():
                    "(both may have been paused or out of funds).")
         return
 
+    update_history(rows)
     post_slack(build_text(rows))
     print("Posted to Slack.")
 
