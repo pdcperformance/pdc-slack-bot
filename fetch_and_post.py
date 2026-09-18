@@ -120,6 +120,7 @@ def build_text(rows):
                 f"_Cheaper per add-to-cart: {win['label'].split(' · ')[0]} "
                 f"(${win['cpc']:.2f} vs ${lose['cpc']:.2f})._"
             )
+    parts.append("<https://pdcperformance.github.io/pdc-slack-bot/|\U0001F4C8 See the full history graph>")
     return "\n".join(parts)
 
 
