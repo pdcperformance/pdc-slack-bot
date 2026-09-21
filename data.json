@@ -180,5 +180,12 @@
     "b_carts": 5,
     "a_spend": 13.62,
     "b_spend": 14.1
+  },
+  {
+    "date": "2026-09-20",
+    "a_carts": 12,
+    "b_carts": 2,
+    "a_spend": 17.59,
+    "b_spend": 11.04
   }
 ]
