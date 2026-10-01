@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PDC Ad Performance</title>
-<meta name="description" content="Reel A vs Reel B daily add-to-carts and cost per cart, updated automatically.">
+<meta name="description" content="Dual Sensor vs rom and more — daily add-to-carts and cost per cart, updated automatically.">
 <style>
   :root{
     --bg:#fbfbf9; --surface:#ffffff; --ink:#1a1d21; --ink-2:#565b62; --muted:#8a9099;
@@ -79,11 +79,11 @@
 <div class="wrap">
   <header>
     <div class="eyebrow">PDC Performance · Meta ads</div>
-    <h1>Reel A vs Reel B</h1>
+    <h1>Dual Sensor vs rom and more</h1>
     <p class="sub">Daily add-to-carts and cost per add-to-cart. Updates itself every morning.</p>
     <div class="legend">
-      <span class="key"><span class="swatch" style="background:var(--a)"></span>Reel A · device reel</span>
-      <span class="key"><span class="swatch" style="background:var(--b)"></span>Reel B · carousel <span style="color:var(--muted)">(from Sep 14)</span></span>
+      <span class="key"><span class="swatch" style="background:var(--a)"></span>Dual Sensor</span>
+      <span class="key"><span class="swatch" style="background:var(--b)"></span>rom and more <span style="color:var(--muted)">(new ad set from Oct 1)</span></span>
     </div>
   </header>
 
@@ -114,7 +114,7 @@ const A="#colorA", B="#colorB";
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const fmtMoney = v => v==null? "—" : "$"+v.toFixed(2);
 const fmtDate = s => { const [y,m,d]=s.split("-"); return new Date(y,m-1,d).toLocaleDateString("en-US",{month:"short",day:"numeric"}); };
-const SWITCH_DATE="2026-09-14";
+const SWITCH_DATE="2026-10-01";
 
 function cpc(carts,spend){ return carts>0 ? spend/carts : null; }
 
@@ -161,7 +161,7 @@ function drawChart(el, data, accessor, {money=false}={}){
   if(si>=0){
     const sg=mk("g",{class:"switch"}); const x=xs(si);
     sg.appendChild(mk("line",{x1:x,y1:m.t,x2:x,y2:m.t+ih}));
-    const st=mk("text",{x:x+4,y:m.t+10}); st.textContent="B → carousel"; sg.appendChild(st);
+    const st=mk("text",{x:x+4,y:m.t+10}); st.textContent="new ad set →"; sg.appendChild(st);
     svg.appendChild(sg);
   }
 
@@ -218,8 +218,8 @@ function drawChart(el, data, accessor, {money=false}={}){
     const av=accessor(d,"a"), bv=accessor(d,"b");
     const fmt=v=> v==null?"—":(money?"$"+v.toFixed(2):v);
     tip.innerHTML=`<div class="d">${fmtDate(d.date)}</div>`+
-      `<div class="r"><span class="k"><i style="background:${cssVar("--a")}"></i>Reel A</span><span class="v">${fmt(av)}</span></div>`+
-      `<div class="r"><span class="k"><i style="background:${cssVar("--b")}"></i>Reel B</span><span class="v">${fmt(bv)}</span></div>`;
+      `<div class="r"><span class="k"><i style="background:${cssVar("--a")}"></i>Dual Sensor</span><span class="v">${fmt(av)}</span></div>`+
+      `<div class="r"><span class="k"><i style="background:${cssVar("--b")}"></i>rom and more</span><span class="v">${fmt(bv)}</span></div>`;
     const r=svg.getBoundingClientRect();
     tip.style.left=(x/W*r.width)+"px";
     const topv=Math.min(av==null?1e9:ys(av), bv==null?1e9:ys(bv));
@@ -239,19 +239,19 @@ function renderKPIs(data){
   const rec=data.slice(-7);
   const avg=(k)=>{const xs=rec.map(d=>cpc(d[k+"_carts"],d[k+"_spend"])).filter(v=>v!=null); return xs.length?xs.reduce((a,b)=>a+b,0)/xs.length:null;};
   const a7=avg("a"), b7=avg("b");
-  const cheaper = (a7!=null&&b7!=null) ? (a7<b7?"Reel A":"Reel B") : "—";
+  const cheaper = (a7!=null&&b7!=null) ? (a7<b7?"Dual Sensor":"rom and more") : "—";
   const el=document.getElementById("kpis");
   const tile=(lbl,val,note)=>`<div class="kpi"><div class="lbl">${lbl}</div><div class="val">${val}</div><div class="note">${note||""}</div></div>`;
   el.innerHTML =
-    tile("Reel A · cost/cart (7-day)", fmtMoney(a7), "latest "+fmtMoney(la)) +
-    tile("Reel B · cost/cart (7-day)", fmtMoney(b7), "latest "+fmtMoney(lb)) +
+    tile("Dual Sensor · cost/cart (7-day)", fmtMoney(a7), "latest "+fmtMoney(la)) +
+    tile("rom and more · cost/cart (7-day)", fmtMoney(b7), "latest "+fmtMoney(lb)) +
     tile("Cheaper per cart (7-day)", cheaper, a7!=null&&b7!=null?fmtMoney(Math.min(a7,b7))+" vs "+fmtMoney(Math.max(a7,b7)):"") +
     tile("Days tracked", data.length, data[0].date.slice(5)+" → "+last.date.slice(5));
 }
 
 function renderTable(data){
   const t=document.getElementById("tbl");
-  let h="<thead><tr><th>Date</th><th>A carts</th><th>A $/cart</th><th>A spend</th><th>B carts</th><th>B $/cart</th><th>B spend</th></tr></thead><tbody>";
+  let h="<thead><tr><th>Date</th><th>Dual carts</th><th>Dual $/cart</th><th>Dual spend</th><th>ROM carts</th><th>ROM $/cart</th><th>ROM spend</th></tr></thead><tbody>";
   data.slice().reverse().forEach(d=>{
     const cls = d.date===SWITCH_DATE ? ' class="switch-row"' : '';
     h+=`<tr${cls}><td>${fmtDate(d.date)}</td><td>${d.a_carts}</td><td>${fmtMoney(cpc(d.a_carts,d.a_spend))}</td><td>${fmtMoney(d.a_spend)}</td><td>${d.b_carts}</td><td>${fmtMoney(cpc(d.b_carts,d.b_spend))}</td><td>${fmtMoney(d.b_spend)}</td></tr>`;
