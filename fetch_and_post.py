@@ -2,15 +2,18 @@
 """
 PDC daily ad check -> Slack.
 
-Pulls yesterday's Meta (Facebook) ad-set stats for the PDC campaign and posts a
-short summary to a Slack channel via an Incoming Webhook.
+Pulls yesterday's Meta (Facebook) stats for the two ADS inside the live PDC
+ad set and posts a short A/B summary to a Slack channel via an Incoming Webhook.
+
+(Earlier this compared two separate ad SETS. The campaign was consolidated into
+one ad set that A/B-tests two ads, so we now compare the two ads inside it.)
 
 No third-party packages required (Python standard library only).
 
 Environment variables (set these as GitHub Actions secrets):
   META_ACCESS_TOKEN   - a Meta "System User" token with the ads_read permission
   SLACK_WEBHOOK_URL   - a Slack Incoming Webhook URL for the target channel
-  CAMPAIGN_ID         - (optional) defaults to the PDC "1st campaign" id
+  LIVE_ADSET          - (optional) defaults to the live "Add to cart" ad set id
 """
 
 import os
@@ -25,17 +28,20 @@ API = f"https://graph.facebook.com/{API_VERSION}"
 
 TOKEN = os.environ.get("META_ACCESS_TOKEN")
 SLACK_WEBHOOK = os.environ.get("SLACK_WEBHOOK_URL")
-CAMPAIGN_ID = os.environ.get("CAMPAIGN_ID", "120246423368000680")
+# The single live ad set (optimized for Add to cart) that holds the two A/B ads.
+LIVE_ADSET = os.environ.get("LIVE_ADSET", "120247691773520680")
 DATA_FILE = os.environ.get("DATA_FILE", "data.json")
 
-# The two ad sets we compare, in display order (A first, then B).
-# Reel A = the original device reel; Reel B = the slot now running the carousel.
-AD_SETS = [
-    ("120246423368010680", "Reel A · device reel"),
-    ("120246980935840680", "Reel B · carousel"),
+# Inside the live ad set we A/B two ads. Each is pinned to a graph slot (a / b)
+# by a lowercase substring of its ad name, so the slots stay consistent even if
+# an ad is renamed with a suffix like " - Copy". If an ad's name stops matching,
+# the leftover ad still fills the empty slot (see assign_slots), so the graph
+# keeps updating regardless.
+SLOT_MATCH = [
+    ("a", "dual", "Dual Sensor"),    # (slot, name substring to match, display label)
+    ("b", "rom",  "rom and more"),
 ]
-ORDER = [aid for aid, _ in AD_SETS]
-LABELS = dict(AD_SETS)
+SLOT_LABELS = {slot: label for slot, _needle, label in SLOT_MATCH}
 
 # Meta returns "add to cart" under one of several action_type names depending on
 # how the pixel/event is set up. We pick the best single match (never sum, to
@@ -56,14 +62,15 @@ def http_get_json(url):
 
 
 def get_insights():
+    # Ask the live ad set for yesterday's numbers broken out per ad.
     params = {
-        "level": "adset",
-        "fields": "adset_id,adset_name,spend,reach,actions",
+        "level": "ad",
+        "fields": "ad_id,ad_name,adset_id,spend,reach,actions",
         "date_preset": "yesterday",
         "access_token": TOKEN,
         "limit": 100,
     }
-    url = f"{API}/{CAMPAIGN_ID}/insights?" + urllib.parse.urlencode(params)
+    url = f"{API}/{LIVE_ADSET}/insights?" + urllib.parse.urlencode(params)
     return http_get_json(url)
 
 
@@ -86,24 +93,35 @@ def add_to_carts(actions):
     return 0
 
 
-def summarize(row):
-    aid = row.get("adset_id")
+def assign_slots(rows):
+    """Map the ad rows to graph slots {'a': row|None, 'b': row|None} by ad name,
+    falling back to filling empty slots with any leftover ads (stable by ad_id)."""
+    slots = {"a": None, "b": None}
+    remaining = list(rows)
+    for slot, needle, _label in SLOT_MATCH:
+        for r in list(remaining):
+            if needle in (r.get("ad_name") or "").lower():
+                slots[slot] = r
+                remaining.remove(r)
+                break
+    remaining.sort(key=lambda r: r.get("ad_id", ""))
+    for slot in ("a", "b"):
+        if slots[slot] is None and remaining:
+            slots[slot] = remaining.pop(0)
+    return slots
+
+
+def summarize(row, label):
     spend = float(row.get("spend", 0) or 0)
     reach = int(row.get("reach", 0) or 0)
     carts = add_to_carts(row.get("actions"))
     cpc = (spend / carts) if carts else None
-    return {
-        "label": LABELS.get(aid, row.get("adset_name", aid)),
-        "carts": carts,
-        "spend": spend,
-        "reach": reach,
-        "cpc": cpc,
-    }
+    return {"label": label, "carts": carts, "spend": spend, "reach": reach, "cpc": cpc}
 
 
-def build_text(rows):
+def build_text(slots):
     parts = ["*PDC daily ad check — yesterday*"]
-    stats = [summarize(r) for r in rows]
+    stats = [summarize(slots[s], SLOT_LABELS[s]) for s in ("a", "b") if slots.get(s)]
     for s in stats:
         cpc = f"${s['cpc']:.2f}/cart" if s["cpc"] is not None else "—"
         parts.append(
@@ -117,7 +135,7 @@ def build_text(rows):
         lose = max(priced, key=lambda s: s["cpc"])
         if win["cpc"] != lose["cpc"]:
             parts.append(
-                f"_Cheaper per add-to-cart: {win['label'].split(' · ')[0]} "
+                f"_Cheaper per add-to-cart: {win['label']} "
                 f"(${win['cpc']:.2f} vs ${lose['cpc']:.2f})._"
             )
     parts.append("<https://pdcperformance.github.io/pdc-slack-bot/|\U0001F4C8 See the full history graph>")
@@ -136,13 +154,12 @@ def post_slack(text):
         r.read()
 
 
-def update_history(rows):
+def update_history(slots):
     """Append yesterday's A/B numbers to data.json (deduped by date) for the graph."""
-    by_id = {r.get("adset_id"): r for r in rows}
-    a = by_id.get("120246423368010680")
-    b = by_id.get("120246980935840680")
+    a = slots.get("a")
+    b = slots.get("b")
     if not a or not b:
-        return  # need both reels to record a comparison point
+        return  # need both ads to record a comparison point
     date = a.get("date_start") or b.get("date_start")
     if not date:
         return
@@ -178,16 +195,16 @@ def main():
         print(body, file=sys.stderr)
         sys.exit(1)
 
-    rows = [r for r in js.get("data", []) if r.get("adset_id") in ORDER]
-    rows.sort(key=lambda r: ORDER.index(r["adset_id"]))
+    rows = js.get("data", [])  # already scoped to the live ad set by the URL
+    slots = assign_slots(rows)
 
-    if not rows:
-        post_slack(":warning: PDC ad check ran but found no data for the two ad sets yesterday "
-                   "(both may have been paused or out of funds).")
+    if not slots["a"] and not slots["b"]:
+        post_slack(":warning: PDC ad check ran but found no ad data for the live ad set yesterday "
+                   "(it may still be in review, paused, or had no spend).")
         return
 
-    update_history(rows)
-    post_slack(build_text(rows))
+    update_history(slots)
+    post_slack(build_text(slots))
     print("Posted to Slack.")
 
 
